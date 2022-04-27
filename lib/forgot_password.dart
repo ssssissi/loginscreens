@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:magic_sdk/magic_sdk.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 class ForgotPass extends StatefulWidget {
   const ForgotPass({Key? key}) : super(key: key);
 
@@ -9,12 +10,7 @@ class ForgotPass extends StatefulWidget {
 
 class _ForgotPass extends State<ForgotPass>{
   final TextEditingController emailController = TextEditingController();
-  login(BuildContext context) async {
-    Magic magic= Magic.instance;
-    final token =
-    await magic.auth.loginWithMagicLink(email: emailController.text);
-    print(token);
-  }
+
   @override
   Widget build(BuildContext context) {
     return Stack (
@@ -90,8 +86,22 @@ class _ForgotPass extends State<ForgotPass>{
                                   ),
                                 ),
                               ),
-                              TextField(
+                              TextFormField(
                                 controller: emailController,
+                                validator: (value) {
+                                  if (value!.isEmpty) {
+                                    return ("Please Enter Your Email");
+                                  }
+                                  // reg expression for email validation
+                                  if (!RegExp("^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+.[a-z]")
+                                      .hasMatch(value)) {
+                                    return ("Please Enter a valid email");
+                                  }
+                                  return null;
+                                },
+                                onSaved: (value) {
+                                  emailController.text = value!;
+                                },
                                 style: const TextStyle(color: Colors.black),
                                 decoration: InputDecoration(
                                     enabledBorder: OutlineInputBorder(
@@ -124,12 +134,12 @@ class _ForgotPass extends State<ForgotPass>{
                                       Icons.vpn_key,
                                     ),
                                     onPressed: () {
-                                      setState(() {
-                                        login(context);
-                                      });
+                                      FirebaseAuth.instance.sendPasswordResetEmail(
+                                        email: emailController.text)
+                                    .then((value) => Navigator.of(context).pop());
                                     }
+                                      ),
                                 ),
-                              ),
                             ],
                           )
                       ),
@@ -142,7 +152,6 @@ class _ForgotPass extends State<ForgotPass>{
         ),
       ),
     ),
-      Magic.instance.relayer
     ],
     );
   }

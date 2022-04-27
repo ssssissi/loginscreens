@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:magic_sdk/magic_sdk.dart';
+import 'package:untitled/profile_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:untitled/utils.dart';
+
+
 class Verification extends StatefulWidget {
   const Verification({Key? key}) : super(key: key);
   @override
@@ -8,12 +15,24 @@ class Verification extends StatefulWidget {
 
 class _Verify extends State<Verification>{
   final TextEditingController phoneController = TextEditingController();
-  login(BuildContext context) async {
-    Magic magic= Magic.instance;
-    final token =
-    await magic.auth.loginWithSMS(phoneNumber: phoneController.text);
-    print(token);
+  TextEditingController otpController = TextEditingController();
+  FirebaseAuth auth = FirebaseAuth.instance;
+  String verificationId= "";
+  void signInWithPhoneAuthCredential (
+      PhoneAuthCredential phoneAuthCredential
+      ) async {
+    try {
+      final authCredential = await auth.signInWithCredential(phoneAuthCredential);
+      if (authCredential.user!=null)
+        {
+          Navigator.push(context, MaterialPageRoute(builder: (context)=> MyProfile()));
+        }
+    } on FirebaseAuthException catch (e){
+      print("catch");
+    }
   }
+
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -31,7 +50,9 @@ class _Verify extends State<Verification>{
                   child: Text("PerfoRm",textAlign: TextAlign.center)
               ),
             ),
-            body: Container (
+            body: Stack(
+                children: [
+            Container (
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height,
               color: Colors.white,
@@ -119,8 +140,8 @@ class _Verify extends State<Verification>{
                                 ),
                                 ElevatedButton(
                                   onPressed: () {
-                                    login(context);
-                                  },
+                                    getotp();
+                                    },
                                   style: ElevatedButton.styleFrom(primary: const Color(0xff051b47),
                                       fixedSize: const Size(130, 50),
                                       textStyle: const TextStyle(fontSize: 16),
@@ -132,6 +153,44 @@ class _Verify extends State<Verification>{
                                 const SizedBox(
                                   height: 25,
                                 ),
+                                TextField(
+                                  controller: otpController,
+                                  keyboardType: TextInputType.phone,
+                                  style: const TextStyle(color: Colors.black),
+                                  decoration: InputDecoration(
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xff051b47),
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: const BorderSide(
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      hintText: "Verification Code",
+                                      hintStyle: const TextStyle(color: Colors.white),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      )),
+                                ),
+                                const SizedBox(
+                                  height: 25,
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    verify();
+                                  },
+                                  style: ElevatedButton.styleFrom(primary: const Color(0xff051b47),
+                                      fixedSize: const Size(130, 50),
+                                      textStyle: const TextStyle(fontSize: 16),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))
+                                  ),
+                                  child: const Text('Submit'),
+
+                                ),
                               ],
                             ),
                           ),
@@ -141,11 +200,36 @@ class _Verify extends State<Verification>{
                   ),
                 ],
               ),
+            ),
+    ],
             )
         ),
-        Magic.instance.relayer
       ],
     );
+  }
+
+  Future<void> getotp() async {
+    await auth.verifyPhoneNumber(phoneNumber: phoneController.text,
+        verificationCompleted: (PhoneAuthCredential credential) async{
+      await auth.signInWithCredential(credential);
+        },
+        verificationFailed: (FirebaseAuthException e){
+      if (e.code=='invalid-phone-number'){
+        print ('The provided phone number is not valid.');
+          showSnackBar(context, e.code);
+      }
+        },
+        codeSent: (String verificationId, int? resendToken) async{
+      this.verificationId=verificationId;
+        },
+        codeAutoRetrievalTimeout: (String verificationId){
+        },);
+  }
+
+  Future<void> verify() async {
+    PhoneAuthCredential phoneAuthCredential=PhoneAuthProvider.credential(verificationId: verificationId,
+        smsCode: otpController.text);
+    signInWithPhoneAuthCredential(phoneAuthCredential);
   }
 
 }

@@ -1,11 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:untitled/login.dart';
-import 'package:untitled/register.dart';
-import 'dart:async';
-import 'dart:ui';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/services.dart';
-import 'package:local_auth/local_auth.dart';
 import 'package:untitled/ID.dart';
 
 import 'ID.dart';
@@ -56,10 +50,6 @@ class _MyHome2 extends State<MyHome2> {
                     const SizedBox(
                       height: 20,
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children:
-                      [
                         ElevatedButton(
                           onPressed: () async {
                             final isAuthenticated = await MyAuth.authenticate();
@@ -84,24 +74,8 @@ class _MyHome2 extends State<MyHome2> {
                           child: const Text('Sign In', style: TextStyle(color: Colors.white)),
 
                         ),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.pushNamed(context, 'register');
-                          },
-                          style: ElevatedButton.styleFrom(primary: const Color.fromRGBO(52, 99, 141, 200),
-                              fixedSize: const Size(120, 60),
-                              side: BorderSide(width: 1.5, color: Colors.white),
-                              textStyle: const TextStyle(fontSize: 18),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), shadowColor: Colors.white
-                          ),
-                          child: const Text('Sign Up'),
-
-                        ),
-
                       ],
                     ),
-                  ],
-                ),
               ),
             ),
           ),
